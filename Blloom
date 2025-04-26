@@ -1,0 +1,81 @@
+-- Pet Simulator 1 - BloomX Hub
+
+local player = game.Players.LocalPlayer
+
+-- Create GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "PetSim1Hub"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 250, 0, 200)
+frame.Position = UDim2.new(0.5, -125, 0.5, -100)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.Active = true
+frame.Draggable = true
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0, 40)
+title.Text = "Pet Simulator 1 Hub"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundColor3 = Color3.fromRGB(40,40,40)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+
+local autofarm = Instance.new("TextButton", frame)
+autofarm.Size = UDim2.new(1, -20, 0, 40)
+autofarm.Position = UDim2.new(0, 10, 0, 50)
+autofarm.Text = "Auto Farm: OFF"
+autofarm.TextColor3 = Color3.new(1,1,1)
+autofarm.BackgroundColor3 = Color3.fromRGB(60,60,60)
+autofarm.Font = Enum.Font.Gotham
+autofarm.TextSize = 18
+
+local autohatch = Instance.new("TextButton", frame)
+autohatch.Size = UDim2.new(1, -20, 0, 40)
+autohatch.Position = UDim2.new(0, 10, 0, 100)
+autohatch.Text = "Auto Hatch: OFF"
+autohatch.TextColor3 = Color3.new(1,1,1)
+autohatch.BackgroundColor3 = Color3.fromRGB(60,60,60)
+autohatch.Font = Enum.Font.Gotham
+autohatch.TextSize = 18
+
+local teleport = Instance.new("TextButton", frame)
+teleport.Size = UDim2.new(1, -20, 0, 40)
+teleport.Position = UDim2.new(0, 10, 0, 150)
+teleport.Text = "Teleport to Spawn"
+teleport.TextColor3 = Color3.new(1,1,1)
+teleport.BackgroundColor3 = Color3.fromRGB(60,60,60)
+teleport.Font = Enum.Font.Gotham
+teleport.TextSize = 18
+
+-- Autofarm logic
+local farming = false
+autofarm.MouseButton1Click:Connect(function()
+    farming = not farming
+    autofarm.Text = "Auto Farm: " .. (farming and "ON" or "OFF")
+    while farming do
+        -- Farming coins
+        for i,v in pairs(workspace["__THINGS"].Coins:GetChildren()) do
+            if v:IsA("Model") and v:FindFirstChild("Coin") then
+                game:GetService("ReplicatedStorage").Network:FireServer("collect coin", v.Name)
+            end
+        end
+        wait(0.2)
+    end
+end)
+
+-- Auto hatch logic
+local hatching = false
+autohatch.MouseButton1Click:Connect(function()
+    hatching = not hatching
+    autohatch.Text = "Auto Hatch: " .. (hatching and "ON" or "OFF")
+    while hatching do
+        game:GetService("ReplicatedStorage").Network:FireServer("buy egg", "Tier 1 Egg", false)
+        wait(0.5)
+    end
+end)
+
+-- Teleport Logic
+teleport.MouseButton1Click:Connect(function()
+    player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 10, 0)) -- Spawn area
+end)
