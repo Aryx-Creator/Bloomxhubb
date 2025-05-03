@@ -1,81 +1,95 @@
--- Pet Simulator 1 - BloomX Hub
+-- Bee Swarm Simulator Ascended Mobile Macro Script
 
-local player = game.Players.LocalPlayer
+-- Settings for Macro
+local autoSwingEnabled = true
+local autoCollectTokens = true
+local autoConvertEnabled = true
+local farmField = "Cog Field"  -- Set to any field you want to farm automatically
 
--- Create GUI
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "PetSim1Hub"
+local swingDelay = 0.5  -- Time between swings in seconds
+local tokenDelay = 1    -- Time between token collection attempts
+local fieldFarmDelay = 2  -- Time between field farming actions
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 250, 0, 200)
-frame.Position = UDim2.new(0.5, -125, 0.5, -100)
-frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.Active = true
-frame.Draggable = true
+-- UI Settings for Atlas Hub Style
+local gui = createUI()
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1, 0, 0, 40)
-title.Text = "Pet Simulator 1 Hub"
-title.TextColor3 = Color3.new(1,1,1)
-title.BackgroundColor3 = Color3.fromRGB(40,40,40)
-title.Font = Enum.Font.GothamBold
-title.TextSize = 20
+-- Create UI Buttons (Atlas Hub Inspired)
+local swingButton = gui:createButton("Auto Swing", 0, 0, 100, 50)
+local collectButton = gui:createButton("Auto Collect Tokens", 0, 60, 100, 50)
+local convertButton = gui:createButton("Auto Convert", 0, 120, 100, 50)
 
-local autofarm = Instance.new("TextButton", frame)
-autofarm.Size = UDim2.new(1, -20, 0, 40)
-autofarm.Position = UDim2.new(0, 10, 0, 50)
-autofarm.Text = "Auto Farm: OFF"
-autofarm.TextColor3 = Color3.new(1,1,1)
-autofarm.BackgroundColor3 = Color3.fromRGB(60,60,60)
-autofarm.Font = Enum.Font.Gotham
-autofarm.TextSize = 18
+-- Functions
 
-local autohatch = Instance.new("TextButton", frame)
-autohatch.Size = UDim2.new(1, -20, 0, 40)
-autohatch.Position = UDim2.new(0, 10, 0, 100)
-autohatch.Text = "Auto Hatch: OFF"
-autohatch.TextColor3 = Color3.new(1,1,1)
-autohatch.BackgroundColor3 = Color3.fromRGB(60,60,60)
-autohatch.Font = Enum.Font.Gotham
-autohatch.TextSize = 18
+-- Auto Swing Tool
+function autoSwing()
+    while autoSwingEnabled do
+        -- Simulate swing action in the current field (tap on tool area)
+        touchTap(x, y)  -- Replace x, y with the tool's location for swinging
+        wait(swingDelay)
+    end
+end
 
-local teleport = Instance.new("TextButton", frame)
-teleport.Size = UDim2.new(1, -20, 0, 40)
-teleport.Position = UDim2.new(0, 10, 0, 150)
-teleport.Text = "Teleport to Spawn"
-teleport.TextColor3 = Color3.new(1,1,1)
-teleport.BackgroundColor3 = Color3.fromRGB(60,60,60)
-teleport.Font = Enum.Font.Gotham
-teleport.TextSize = 18
-
--- Autofarm logic
-local farming = false
-autofarm.MouseButton1Click:Connect(function()
-    farming = not farming
-    autofarm.Text = "Auto Farm: " .. (farming and "ON" or "OFF")
-    while farming do
-        -- Farming coins
-        for i,v in pairs(workspace["__THINGS"].Coins:GetChildren()) do
-            if v:IsA("Model") and v:FindFirstChild("Coin") then
-                game:GetService("ReplicatedStorage").Network:FireServer("collect coin", v.Name)
+-- Auto Token Collection (Including Special Tokens)
+function autoCollect()
+    while autoCollectTokens do
+        -- Find all visible tokens and collect them (including special tokens like Christmas)
+        for _, token in pairs(getTokens()) do
+            if token.isCollectible then
+                touchTap(token.x, token.y)  -- Tap token location
             end
         end
-        wait(0.2)
+        wait(tokenDelay)
     end
+end
+
+-- Auto Convert Pollen
+function autoConvert()
+    while autoConvertEnabled do
+        local convertStation = getConvertStation()  -- Fetch the conversion station
+        if convertStation then
+            touchTap(convertStation.x, convertStation.y)  -- Tap to convert
+            wait(2)  -- Wait before next conversion attempt
+        end
+    end
+end
+
+-- Auto Farm Field (Specific Field e.g., Cog Field)
+function autoFarmField(fieldName)
+    while true do
+        -- Locate the correct field (you need to find its coordinates or interaction button)
+        local field = getFieldByName(fieldName)
+        if field then
+            touchTap(field.x, field.y)  -- Tap to enter the field and start farming
+            wait(fieldFarmDelay)
+        else
+            -- If the field isn't available, wait and try again
+            wait(3)
+        end
+    end
+end
+
+-- Atlas Hub GUI Setup
+swingButton:onClick(function() 
+    autoSwingEnabled = not autoSwingEnabled  -- Toggle auto swing
 end)
 
--- Auto hatch logic
-local hatching = false
-autohatch.MouseButton1Click:Connect(function()
-    hatching = not hatching
-    autohatch.Text = "Auto Hatch: " .. (hatching and "ON" or "OFF")
-    while hatching do
-        game:GetService("ReplicatedStorage").Network:FireServer("buy egg", "Tier 1 Egg", false)
-        wait(0.5)
-    end
+collectButton:onClick(function()
+    autoCollectTokens = not autoCollectTokens  -- Toggle token collection
 end)
 
--- Teleport Logic
-teleport.MouseButton1Click:Connect(function()
-    player.Character.HumanoidRootPart.CFrame = CFrame.new(Vector3.new(0, 10, 0)) -- Spawn area
+convertButton:onClick(function()
+    autoConvertEnabled = not autoConvertEnabled  -- Toggle conversion
 end)
+
+-- Run the Auto Farm Function for Cog Field (can be changed to any field)
+spawn(function() autoFarmField(farmField) end)
+
+-- Run Functions in Parallel
+spawn(function() autoSwing() end)
+spawn(function() autoCollect() end)
+spawn(function() autoConvert() end)
+
+-- Main Loop (keep the script running)
+while true do
+    wait(0.1)  -- Keeps the script running and checking for updates
+end
